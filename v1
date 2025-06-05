@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Operations Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom styles for a beautiful and colorful look */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to bottom right, #1a202c, #2d3748); /* Dark gradient background */
+            color: #e2e8f0; /* Light text color */
+        }
+
+        /* General container styling */
+        .dashboard-container {
+            background-color: rgba(30, 41, 59, 0.9); /* Darker, semi-transparent background */
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1); /* Stronger shadow */
+            border: 1px solid #4a5568; /* Subtle border */
+        }
+
+        /* Input field styling */
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            background-color: #2d3748; /* Darker input background */
+            border: 1px solid #4a5568; /* Input border */
+            color: #e2e8f0; /* Input text color */
+            transition: all 0.2s ease-in-out;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            border-color: #667eea; /* Purple focus Network Dashboard Data Input
+border */
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.5); /* Purple focus shadow */
+            outline: none;
+        }
+
+        /* Button styling */
+        .btn-primary {
+            background: linear-gradient(to right, #667eea, #764ba2); /* Purple-indigo gradient */
+            transition: all 0.3s ease-in-out;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(to right, #5a67d8, #6a4293); /* Darker gradient on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #4a5568;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .btn-secondary:hover {
+            background-color: #2d3748;
+            transform: translateY(-1px);
+        }
+
+        /* Tab button styling */
+        .tab-button {
+            background-color: #4a5568;
+            color: #a0aec0;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: #ffffff;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .tab-button:not(.active):hover {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            transform: translateY(-1px);
+        }
+
+        /* Card styling */
+        .dashboard-card {
+            background-color: rgba(45, 55, 72, 0.8); /* Slightly lighter card background */
+            border: 1px solid #4a5568;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px) scale(1.02); /* More pronounced lift and slight scale */
+        }
+
+        /* Table styling */
+        .dashboard-table th {
+            background-color: #2d3748; /* Darker table header */
+            color: #cbd5e0;
+        }
+
+        .dashboard-table td {
+            background-color: #1a202c; /* Darker table cell */
+            border-color: #4a5568;
+        }
+
+        .dashboard-table tr:hover td {
+            background-color: #2d3748; /* Highlight row on hover */
+        }
+
+        /* Custom Modal Styling */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: #2d3748;
+            border: 1px solid #4a5568;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 sm:p-8">
+
+    <div id="customModal" class="fixed inset-0 flex items-center justify-center hidden modal-overlay">
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full max-w-sm modal-content text-center">
+            <p id="modalMessage" class="text-lg font-semibold mb-6 text-white"></p>
+            <button id="modalCloseBtn" class="py-2 px-6 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200">OK</button>
+        </div>
+    </div>
+
+    <div id="inputFormSection" class="w-full max-w-4xl dashboard-container p-6 sm:p-10">
+        <h1 class="text-4xl font-extrabold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+            DR Dashboard Data Input
+        </h1>
+        <form id="dashboardInputForm" class="space-y-6">
+            <div class="bg-gray-700 bg-opacity-50 p-6 rounded-xl border border-gray-600 shadow-inner">
+                <h2 class="text-2xl font-bold mb-4 flex items-center text-purple-300">
+                    <i data-lucide="ticket" class="mr-3 text-pink-400"></i> Ticket Summary
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="generatedTickets" class="block text-sm font-medium text-gray-300 mb-1">Generated Tickets</label>
+                        <input type="number" id="generatedTickets" class="w-full p-3 rounded-lg" placeholder="e.g., 280" value="280" required>
+                    </div>
+                    <div>
+                        <label for="resolvedTickets" class="block text-sm font-medium text-gray-300 mb-1">Resolved Tickets</label>
+                        <input type="number" id="resolvedTickets" class="w-full p-3 rounded-lg" placeholder="e.g., 270" value="270" required>
+                    </div>
+                    <div>
+                        <label for="pendingTickets" class="block text-sm font-medium text-gray-300 mb-1">Pending Tickets</label>
+                        <input type="number" id="pendingTickets" class="w-full p-3 rounded-lg" placeholder="e.g., 3" value="3" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-700 bg-opacity-50 p-6 rounded-xl border border-gray-600 shadow-inner">
+                <h2 class="text-2xl font-bold mb-4 flex items-center text-purple-300">
+                    <i data-lucide="hard-drive" class="mr-3 text-pink-400"></i> Device & Service Availability
+                </h2>
+                <div id="deviceAvailabilityRows" class="space-y-4">
+                    </div>
+                <button type="button" id="addDeviceRowBtn" class="w-full py-3 px-6 bg-gradient-to-r from-green-500 to-teal-500 text-white font-bold rounded-lg shadow-lg hover:from-green-600 hover:to-teal-600 transition-all duration-300 flex items-center justify-center mt-4">
+                    <i data-lucide="plus" class="mr-2"></i> Add Device Row
+                </button>
+            </div>
+
+            <div class="bg-gray-700 bg-opacity-50 p-6 rounded-xl border border-gray-600 shadow-inner">
+                <h2 class="text-2xl font-bold mb-4 flex items-center text-purple-300">
+                    <i data-lucide="link" class="mr-3 text-pink-400"></i> PGCIL Link Summary
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="linkDown" class="block text-sm font-medium text-gray-300 mb-1">Link Down</label>
+                        <input type="number" id="linkDown" class="w-full p-3 rounded-lg" placeholder="e.g., 0" value="0" required>
+                    </div>
+                    <div>
+                        <label for="linkFlap" class="block text-sm font-medium text-gray-300 mb-1">Link Flap</label>
+                        <input type="number" id="linkFlap" class="w-full p-3 rounded-lg" placeholder="e.g., 10" value="10" required>
+                    </div>
+                    <div>
+                        <label for="mailSentLinkDown" class="block text-sm font-medium text-gray-300 mb-1">Mail Sent (Link Down)</label>
+                        <input type="number" id="mailSentLinkDown" class="w-full p-3 rounded-lg" placeholder="e.g., 0" value="0" required>
+                    </div>
+                    <div>
+                        <label for="mailSentLinkFlap" class="block text-sm font-medium text-gray-300 mb-1">Mail Sent (Link Flap)</label>
+                        <input type="text" id="mailSentLinkFlap" class="w-full p-3 rounded-lg" placeholder="e.g., Every 4 hours for Flap" value="Every 4 hours for Flap" required>
+                    </div>
+                    <div>
+                        <label for="docketReceivedLinkDown" class="block text-sm font-medium text-gray-300 mb-1">Docket Received (Link Down)</label>
+                        <input type="number" id="docketReceivedLinkDown" class="w-full p-3 rounded-lg" placeholder="e.g., 0" value="0" required>
+                    </div>
+                    <div>
+                        <label for="docketReceivedLinkFlap" class="block text-sm font-medium text-gray-300 mb-1">Docket Received (Link Flap)</label>
+                        <input type="number" id="docketReceivedLinkFlap" class="w-full p-3 rounded-lg" placeholder="e.g., 0" value="0" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="overUtilizedLink" class="block text-sm font-medium text-gray-300 mb-1">Over Utilized Link</label>
+                        <input type="text" id="overUtilizedLink" class="w-full p-3 rounded-lg" placeholder="e.g., 7 with avg. age of 3 month" value="7 with avg. age of 3 month" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-700 bg-opacity-50 p-6 rounded-xl border border-gray-600 shadow-inner">
+                <h2 class="text-2xl font-bold mb-4 flex items-center text-purple-300">
+                    <i data-lucide="thermometer" class="mr-3 text-pink-400"></i> Infra Environment Statistics
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="rhRangeAB" class="block text-sm font-medium text-gray-300 mb-1">RH Range (A-B Aisle)</label>
+                        <input type="text" id="rhRangeAB" class="w-full p-3 rounded-lg" placeholder="e.g., 33.1-58.1" value="33.1-58.1" required>
+                    </div>
+                    <div>
+                        <label for="rhRangeCD" class="block text-sm font-medium text-gray-300 mb-1">RH Range (C-D Aisle)</label>
+                        <input type="text" id="rhRangeCD" class="w-full p-3 rounded-lg" placeholder="e.g., 36.8-59.2" value="36.8-59.2" required>
+                    </div>
+                    <div>
+                        <label for="rhRangeE" class="block text-sm font-medium text-gray-300 mb-1">RH Range (E Aisle)</label>
+                        <input type="text" id="rhRangeE" class="w-full p-3 rounded-lg" placeholder="e.g., 35.6-59.2" value="35.6-59.2" required>
+                    </div>
+                    <div>
+                        <label for="tempRangeAB" class="block text-sm font-medium text-gray-300 mb-1">Temp Range (A-B Aisle)</label>
+                        <input type="text" id="tempRangeAB" class="w-full p-3 rounded-lg" placeholder="e.g., 35.6-59.2" value="35.6-59.2" required>
+                    </div>
+                    <div>
+                        <label for="tempRangeCD" class="block text-sm font-medium text-gray-300 mb-1">Temp Range (C-D Aisle)</label>
+                        <input type="text" id="tempRangeCD" class="w-full p-3 rounded-lg" placeholder="e.g., 18.7-38.6" value="18.7-38.6" required>
+                    </div>
+                    <div>
+                        <label for="tempRangeE" class="block text-sm font-medium text-gray-300 mb-1">Temp Range (E Aisle)</label>
+                        <input type="text" id="tempRangeE" class="w-full p-3 rounded-lg" placeholder="e.g., 18.1-38.6" value="18.1-38.6" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="infraRemarks" class="block text-sm font-medium text-gray-300 mb-1">Remarks</label>
+                        <textarea id="infraRemarks" class="w-full p-3 rounded-lg h-24 resize-y" placeholder="Any additional remarks..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full py-4 px-6 btn-primary text-white font-extrabold text-xl rounded-xl shadow-xl transform hover:scale-105">
+                Show Dashboard
+            </button>
+        </form>
+    </div>
+
+    <div id="dashboardDisplaySection" class="w-full max-w-6xl dashboard-container p-6 sm:p-10 hidden">
+        <h1 class="text-4xl font-extrabold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+            DR Operations Dashboard
+        </h1>
+
+        <div class="flex justify-end mb-6">
+            <button id="backToInputBtn" class="py-2 px-4 btn-secondary text-white rounded-lg shadow-md hover:bg-gray-600 transition-colors duration-200 flex items-center">
+                <i data-lucide="minus" class="mr-2"></i> Back to Input
+            </button>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8">
+            <button class="tab-button px-4 py-2 rounded-lg font-semibold flex items-center active" data-tab="ticketSummary">
+                <i data-lucide="ticket" class="mr-2"></i> Ticket Summary
+            </button>
+            <button class="tab-button px-4 py-2 rounded-lg font-semibold flex items-center" data-tab="deviceAvailability">
+                <i data-lucide="hard-drive" class="mr-2"></i> Device Availability
+            </button>
+            <button class="tab-button px-4 py-2 rounded-lg font-semibold flex items-center" data-tab="pgcilLinkSummary">
+                <i data-lucide="link" class="mr-2"></i> PGCIL Link Summary
+            </button>
+            <button class="tab-button px-4 py-2 rounded-lg font-semibold flex items-center" data-tab="infraEnvironmentStatistics">
+                <i data-lucide="thermometer" class="mr-2"></i> Infra Environment Statistics
+            </button>
+        </div>
+
+        <div class="bg-gray-700 bg-opacity-50 p-6 rounded-xl border border-gray-600 shadow-inner min-h-[400px]">
+            <div id="ticketSummaryContent" class="tab-content">
+                <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-500 mb-6 text-center">Ticket Summary</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="dashboard-card p-6 rounded-xl text-center bg-blue-600">
+                        <p class="text-lg font-medium text-white mb-2">Tickets Generated</p>
+                        <p id="displayGeneratedTickets" class="text-4xl sm:text-5xl font-extrabold text-white"></p>
+                    </div>
+                    <div class="dashboard-card p-6 rounded-xl text-center bg-green-600">
+                        <p class="text-lg font-medium text-white mb-2">Tickets Resolved</p>
+                        <p id="displayResolvedTickets" class="text-4xl sm:text-5xl font-extrabold text-white"></p>
+                    </div>
+                    <div class="dashboard-card p-6 rounded-xl text-center bg-red-600">
+                        <p class="text-lg font-medium text-white mb-2">Tickets Pending</p>
+                        <p id="displayPendingTickets" class="text-4xl sm:text-5xl font-extrabold text-white"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="deviceAvailabilityContent" class="tab-content hidden">
+                <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-500 mb-6 text-center">Device & Service Availability</h2>
+                <div class="overflow-x-auto rounded-xl shadow-lg border border-gray-600">
+                    <table class="min-w-full bg-gray-800 bg-opacity-70 rounded-xl dashboard-table">
+                        <thead>
+                            <tr class="bg-gray-900 text-gray-200 uppercase text-sm leading-normal">
+                                <th class="py-3 px-6 text-left">DR Availability</th>
+                                <th class="py-3 px-6 text-left">Node Count</th>
+                                <th class="py-3 px-6 text-left">Disruption %</th>
+                                <th class="py-3 px-6 text-left">Equipment Avail.</th>
+                                <th class="py-3 px-6 text-left">Service Avail.</th>
+                                <th class="py-3 px-6 text-left">Reason For Disruption</th>
+                            </tr>
+                        </thead>
+                        <tbody id="displayDeviceAvailability" class="text-gray-300 text-sm font-light">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="pgcilLinkSummaryContent" class="tab-content hidden">
+                <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-500 mb-6 text-center">PGCIL Link Summary</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="dashboard-card p-6 rounded-xl text-center bg-red-600">
+                        <p class="text-lg font-medium text-white mb-2">Link Down</p>
+                        <p id="displayLinkDown" class="text-4xl sm:text-5xl font-extrabold text-white"></p>
+                    </div>
+                    <div class="dashboard-card p-6 rounded-xl text-center bg-yellow-600">
+                        <p class="text-lg font-medium text-white mb-2">Link Flap</p>
+                        <p id="displayLinkFlap" class="text-4xl sm:text-5xl font-extrabold text-white"></p>
+                    </div>
+                    <div class="dashboard-card p-6 rounded-xl text-center bg-blue-600">
+                        <p class="text-lg font-medium text-white mb-2">Mail Sent (Link Down)</p>
+                        <p id="displayMailSentLinkDown" class="text-4xl sm:text-5xl font-extrabold text-white"></p>
+                    </div>
+                    <div class="dashboard-card p-6 rounded-xl text-center bg-teal-600">
+                        <p class="text-lg font-medium text-white mb-2">Mail Sent (Link Flap)</p>
+                        <p id="displayMailSentLinkFlap" class="text-4xl sm:text-5xl font-extrabold text-white"></p>
+                    </div>
+                    <div class="dashboard-card p-6 rounded-xl text-center bg-orange-600">
+                        <p class="text-lg font-medium text-white mb-2">Docket Received (Link Down)</p>
+                        <p id="displayDocketReceivedLinkDown" class="text-4xl sm:text-5xl font-extrabold text-white"></p>
+                    </div>
+                    <div class="dashboard-card p-6 rounded-xl text-center bg-indigo-600">
+                        <p class="text-lg font-medium text-white mb-2">Docket Received (Link Flap)</p>
+                        <p id="displayDocketReceivedLinkFlap" class="text-4xl sm:text-5xl font-extrabold text-white"></p>
+                    </div>
+                    <div class="dashboard-card p-6 rounded-xl text-center bg-pink-600 md:col-span-2 lg:col-span-3">
+                        <p class="text-lg font-medium text-white mb-2">Over Utilized Link</p>
+                        <p id="displayOverUtilizedLink" class="text-4xl sm:text-5xl font-extrabold text-white"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="infraEnvironmentStatisticsContent" class="tab-content hidden">
+                <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-500 mb-6 text-center">Infra Environment Statistics</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-lg border border-gray-600">
+                        <h3 class="text-xl font-semibold text-purple-300 mb-4">RH Range Summary</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center border-b border-gray-700 pb-2 last:border-b-0 last:pb-0">
+                                <span class="text-gray-300 text-base sm:text-lg font-light">A-B Aisle:</span>
+                                <span id="displayRhRangeAB" class="text-white text-base sm:text-lg font-medium"></span>
+                            </div>
+                            <div class="flex justify-between items-center border-b border-gray-700 pb-2 last:border-b-0 last:pb-0">
+                                <span class="text-gray-300 text-base sm:text-lg font-light">C-D Aisle:</span>
+                                <span id="displayRhRangeCD" class="text-white text-base sm:text-lg font-medium"></span>
+                            </div>
+                            <div class="flex justify-between items-center border-b border-gray-700 pb-2 last:border-b-0 last:pb-0">
+                                <span class="text-gray-300 text-base sm:text-lg font-light">E Aisle:</span>
+                                <span id="displayRhRangeE" class="text-white text-base sm:text-lg font-medium"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-lg border border-gray-600">
+                        <h3 class="text-xl font-semibold text-purple-300 mb-4">Temperature Range Summary</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center border-b border-gray-700 pb-2 last:border-b-0 last:pb-0">
+                                <span class="text-gray-300 text-base sm:text-lg font-light">A-B Aisle:</span>
+                                <span id="displayTempRangeAB" class="text-white text-base sm:text-lg font-medium"></span>
+                            </div>
+                            <div class="flex justify-between items-center border-b border-gray-700 pb-2 last:border-b-0 last:pb-0">
+                                <span class="text-gray-300 text-base sm:text-lg font-light">C-D Aisle:</span>
+                                <span id="displayTempRangeCD" class="text-white text-base sm:text-lg font-medium"></span>
+                            </div>
+                            <div class="flex justify-between items-center border-b border-gray-700 pb-2 last:border-b-0 last:pb-0">
+                                <span class="text-gray-300 text-base sm:text-lg font-light">E Aisle:</span>
+                                <span id="displayTempRangeE" class="text-white text-base sm:text-lg font-medium"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2 bg-gray-800 bg-opacity-70 p-6 rounded-xl shadow-lg border border-gray-600">
+                        <h3 class="text-xl font-semibold text-purple-300 mb-4">Remarks</h3>
+                        <p id="displayInfraRemarks" class="text-gray-300 text-lg"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // DOM Elements
+        const inputFormSection = document.getElementById('inputFormSection');
+        const dashboardDisplaySection = document.getElementById('dashboardDisplaySection');
+        const dashboardInputForm = document.getElementById('dashboardInputForm');
+        const backToInputBtn = document.getElementById('backToInputBtn');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const deviceAvailabilityRowsContainer = document.getElementById('deviceAvailabilityRows');
+        const addDeviceRowBtn = document.getElementById('addDeviceRowBtn');
+
+        // Custom Modal Elements
+        const customModal = document.getElementById('customModal');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+        // Function to show custom modal
+        function showModal(message) {
+            modalMessage.textContent = message;
+            customModal.classList.remove('hidden');
+        }
+
+        // Function to hide custom modal
+        modalCloseBtn.addEventListener('click', () => {
+            customModal.classList.add('hidden');
+        });
+
+        // Global object to store dashboard data
+        let dashboardData = {
+            ticketSummary: {},
+            deviceAvailability: [],
+            pgcilLinkSummary: {},
+            infraEnvironmentStatistics: {}
+        };
+
+        // Pre-fill Device Availability with example data from the document
+        const initialDeviceAvailabilityData = [
+            { drAvailability: 'DR-OOB-Switch', nodeCount: '49', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: '' },
+            { drAvailability: 'DR-LEAF-Switch', nodeCount: '68', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: '' },
+            { drAvailability: 'DR-Firewall', nodeCount: '6', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: '' },
+            { drAvailability: 'DR EMS-Server', nodeCount: '6', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: '' },
+            { drAvailability: 'DR-Servers', nodeCount: '172', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: '' },
+            { drAvailability: 'PAM Server', nodeCount: '6', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: '' },
+            { drAvailability: 'DRIM and RLPAT Server', nodeCount: '2', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: '' },
+            { drAvailability: 'Active Directory', nodeCount: '2', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: '' },
+            { drAvailability: 'DR-Infra-Switch', nodeCount: '4', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: '' },
+            { drAvailability: 'DR-Core-Switch', nodeCount: '2', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: 'vc' },
+            { drAvailability: 'DR-Spine-Switch', nodeCount: '2', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: '' },
+            { drAvailability: 'DR-Aggregation-Switch', nodeCount: '1', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: 'vc' },
+            { drAvailability: 'DR-Border-Leaf-Switch', nodeCount: '2', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: '' },
+            { drAvailability: 'DR-Interconnect Switches', nodeCount: '1', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: 'vc' },
+            { drAvailability: 'Wan Router', nodeCount: '2', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: '' },
+            { drAvailability: 'Wan Switch', nodeCount: '1', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: 'vc' },
+            { drAvailability: 'Internet Router', nodeCount: '2', nodeAvailabilityDisruption: '0', equipmentAvailability: '100', serviceAvailability: '100', reasonForDisruption: '' },
+        ];
+
+        // Function to render device availability rows in the input form
+        function renderDeviceAvailabilityInputRows() {
+            deviceAvailabilityRowsContainer.innerHTML = ''; // Clear existing rows
+            initialDeviceAvailabilityData.forEach((rowData, index) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'bg-gray-600 bg-opacity-50 p-4 rounded-lg border border-gray-500 relative';
+                rowDiv.innerHTML = `
+                    <button type="button" class="absolute top-2 right-2 text-red-400 hover:text-red-600 transition-colors duration-200 remove-device-row-btn" data-index="${index}" aria-label="Remove row">
+                        <i data-lucide="x" size="20"></i>
+                    </button>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+                        <div>
+                            <label for="drAvailability-${index}" class="block text-sm font-medium text-gray-300 mb-1">DR Availability</label>
+                            <input type="text" id="drAvailability-${index}" class="w-full p-2 rounded-lg text-sm" placeholder="e.g., DR-OOB-Switch" value="${rowData.drAvailability || ''}">
+                        </div>
+                        <div>
+                            <label for="nodeCount-${index}" class="block text-sm font-medium text-gray-300 mb-1">Node Count</label>
+                            <input type="number" id="nodeCount-${index}" class="w-full p-2 rounded-lg text-sm" placeholder="e.g., 49" value="${rowData.nodeCount || ''}">
+                        </div>
+                        <div>
+                            <label for="nodeAvailabilityDisruption-${index}" class="block text-sm font-medium text-gray-300 mb-1">Node Availability Disruption %</label>
+                            <input type="number" id="nodeAvailabilityDisruption-${index}" class="w-full p-2 rounded-lg text-sm" placeholder="e.g., 0" value="${rowData.nodeAvailabilityDisruption || ''}">
+                        </div>
+                        <div>
+                            <label for="equipmentAvailability-${index}" class="block text-sm font-medium text-gray-300 mb-1">Equipment Availability</label>
+                            <input type="number" id="equipmentAvailability-${index}" class="w-full p-2 rounded-lg text-sm" placeholder="e.g., 100" value="${rowData.equipmentAvailability || ''}">
+                        </div>
+                        <div>
+                            <label for="serviceAvailability-${index}" class="block text-sm font-medium text-gray-300 mb-1">Service Availability</label>
+                            <input type="number" id="serviceAvailability-${index}" class="w-full p-2 rounded-lg text-sm" placeholder="e.g., 100" value="${rowData.serviceAvailability || ''}">
+                        </div>
+                        <div>
+                            <label for="reasonForDisruption-${index}" class="block text-sm font-medium text-gray-300 mb-1">Reason For Disruption</label>
+                            <input type="text" id="reasonForDisruption-${index}" class="w-full p-2 rounded-lg text-sm" placeholder="e.g., vc" value="${rowData.reasonForDisruption || ''}">
+                        </div>
+                    </div>
+                `;
+                deviceAvailabilityRowsContainer.appendChild(rowDiv);
+            });
+            // Re-create Lucide icons for newly added elements
+            lucide.createIcons();
+            addRemoveRowListeners(); // Attach listeners to new buttons
+        }
+
+        // Function to add event listeners to remove buttons
+        function addRemoveRowListeners() {
+            document.querySelectorAll('.remove-device-row-btn').forEach(button => {
+                button.onclick = (event) => {
+                    const index = parseInt(event.currentTarget.dataset.index);
+                    initialDeviceAvailabilityData.splice(index, 1); // Remove from our data array
+                    renderDeviceAvailabilityInputRows(); // Re-render the rows
+                };
+            });
+        }
+
+        // Add new device row
+        addDeviceRowBtn.addEventListener('click', () => {
+            initialDeviceAvailabilityData.push({
+                drAvailability: '',
+                nodeCount: '',
+                nodeAvailabilityDisruption: '',
+                equipmentAvailability: '',
+                serviceAvailability: '',
+                reasonForDisruption: ''
+            });
+            renderDeviceAvailabilityInputRows();
+        });
+
+        // Initial render of device availability rows
+        renderDeviceAvailabilityInputRows();
+
+        // Handle form submission
+        dashboardInputForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Collect Ticket Summary data
+            dashboardData.ticketSummary = {
+                generated: document.getElementById('generatedTickets').value,
+                resolved: document.getElementById('resolvedTickets').value,
+                pending: document.getElementById('pendingTickets').value,
+            };
+
+            // Collect Device Availability data
+            dashboardData.deviceAvailability = [];
+            const deviceRows = deviceAvailabilityRowsContainer.querySelectorAll('.bg-gray-600.bg-opacity-50');
+            deviceRows.forEach((row, index) => {
+                dashboardData.deviceAvailability.push({
+                    drAvailability: row.querySelector(`#drAvailability-${index}`).value,
+                    nodeCount: row.querySelector(`#nodeCount-${index}`).value,
+                    nodeAvailabilityDisruption: row.querySelector(`#nodeAvailabilityDisruption-${index}`).value,
+                    equipmentAvailability: row.querySelector(`#equipmentAvailability-${index}`).value,
+                    serviceAvailability: row.querySelector(`#serviceAvailability-${index}`).value,
+                    reasonForDisruption: row.querySelector(`#reasonForDisruption-${index}`).value,
+                });
+            });
+
+            // Collect PGCIL Link Summary data
+            dashboardData.pgcilLinkSummary = {
+                linkDown: document.getElementById('linkDown').value,
+                linkFlap: document.getElementById('linkFlap').value,
+                mailSentLinkDown: document.getElementById('mailSentLinkDown').value,
+                mailSentLinkFlap: document.getElementById('mailSentLinkFlap').value,
+                docketReceivedLinkDown: document.getElementById('docketReceivedLinkDown').value,
+                docketReceivedLinkFlap: document.getElementById('docketReceivedLinkFlap').value,
+                overUtilizedLink: document.getElementById('overUtilizedLink').value,
+            };
+
+            // Collect Infra Environment Statistics data
+            dashboardData.infraEnvironmentStatistics = {
+                rhRangeAB: document.getElementById('rhRangeAB').value,
+                rhRangeCD: document.getElementById('rhRangeCD').value,
+                rhRangeE: document.getElementById('rhRangeE').value,
+                tempRangeAB: document.getElementById('tempRangeAB').value,
+                tempRangeCD: document.getElementById('tempRangeCD').value,
+                tempRangeE: document.getElementById('tempRangeE').value,
+                remarks: document.getElementById('infraRemarks').value,
+            };
+
+            // Populate and show dashboard
+            populateDashboard();
+            inputFormSection.classList.add('hidden');
+            dashboardDisplaySection.classList.remove('hidden');
+        });
+
+        // Populate Dashboard with collected data
+        function populateDashboard() {
+            // Ticket Summary
+            document.getElementById('displayGeneratedTickets').textContent = dashboardData.ticketSummary.generated;
+            document.getElementById('displayResolvedTickets').textContent = dashboardData.ticketSummary.resolved;
+            document.getElementById('displayPendingTickets').textContent = dashboardData.ticketSummary.pending;
+
+            // Device Availability
+            const displayDeviceAvailabilityTableBody = document.getElementById('displayDeviceAvailability');
+            displayDeviceAvailabilityTableBody.innerHTML = ''; // Clear previous data
+            if (dashboardData.deviceAvailability.length === 0) {
+                const noDataRow = document.createElement('tr');
+                noDataRow.innerHTML = `<td colspan="6" class="py-4 px-6 text-center text-gray-400">No device availability data entered.</td>`;
+                displayDeviceAvailabilityTableBody.appendChild(noDataRow);
+            } else {
+                dashboardData.deviceAvailability.forEach(rowData => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-700 hover:bg-gray-700 transition-colors duration-200';
+                    row.innerHTML = `
+                        <td class="py-3 px-6 text-left whitespace-nowrap">${rowData.drAvailability}</td>
+                        <td class="py-3 px-6 text-left">${rowData.nodeCount}</td>
+                        <td class="py-3 px-6 text-left">${rowData.nodeAvailabilityDisruption}%</td>
+                        <td class="py-3 px-6 text-left">${rowData.equipmentAvailability}%</td>
+                        <td class="py-3 px-6 text-left">${rowData.serviceAvailability}%</td>
+                        <td class="py-3 px-6 text-left">${rowData.reasonForDisruption}</td>
+                    `;
+                    displayDeviceAvailabilityTableBody.appendChild(row);
+                });
+            }
+
+
+            // PGCIL Link Summary
+            document.getElementById('displayLinkDown').textContent = dashboardData.pgcilLinkSummary.linkDown;
+            document.getElementById('displayLinkFlap').textContent = dashboardData.pgcilLinkSummary.linkFlap;
+            document.getElementById('displayMailSentLinkDown').textContent = dashboardData.pgcilLinkSummary.mailSentLinkDown;
+            document.getElementById('displayMailSentLinkFlap').textContent = dashboardData.pgcilLinkSummary.mailSentLinkFlap;
+            document.getElementById('displayDocketReceivedLinkDown').textContent = dashboardData.pgcilLinkSummary.docketReceivedLinkDown;
+            document.getElementById('displayDocketReceivedLinkFlap').textContent = dashboardData.pgcilLinkSummary.docketReceivedLinkFlap;
+            document.getElementById('displayOverUtilizedLink').textContent = dashboardData.pgcilLinkSummary.overUtilizedLink;
+
+            // Infra Environment Statistics
+            document.getElementById('displayRhRangeAB').textContent = dashboardData.infraEnvironmentStatistics.rhRangeAB;
+            document.getElementById('displayRhRangeCD').textContent = dashboardData.infraEnvironmentStatistics.rhRangeCD;
+            document.getElementById('displayRhRangeE').textContent = dashboardData.infraEnvironmentStatistics.rhRangeE;
+            document.getElementById('displayTempRangeAB').textContent = dashboardData.infraEnvironmentStatistics.tempRangeAB;
+            document.getElementById('displayTempRangeCD').textContent = dashboardData.infraEnvironmentStatistics.tempRangeCD;
+            document.getElementById('displayTempRangeE').textContent = dashboardData.infraEnvironmentStatistics.tempRangeE;
+            document.getElementById('displayInfraRemarks').textContent = dashboardData.infraEnvironmentStatistics.remarks || 'No remarks provided.';
+        }
+
+        // Back to Input Form
+        backToInputBtn.addEventListener('click', () => {
+            dashboardDisplaySection.classList.add('hidden');
+            inputFormSection.classList.remove('hidden');
+        });
+
+        // Tab Switching Logic
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and hide all content
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.add('hidden'));
+
+                // Add active class to clicked button
+                button.classList.add('active');
+
+                // Show corresponding tab content
+                const targetTab = button.dataset.tab;
+                document.getElementById(`${targetTab}Content`).classList.remove('hidden');
+            });
+        });
+
+        // Set initial tab to Ticket Summary
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('.tab-button[data-tab="ticketSummary"]').click();
+        });
+
+    </script>
+</body>
+</html>
